@@ -11,6 +11,28 @@ import java.util.Scanner;
 public class ClientLauncher {
 	static Connector connector;
 	
+	private static boolean login() {
+		String username, password;
+		BufferedReader input = new BufferedReader (new InputStreamReader(System.in));
+		
+		try {
+			// Ask for username
+			System.out.print("username: ");
+			username = input.readLine();
+			// Ask for password
+			System.out.print("password: ");
+			password = input.readLine();
+			
+			// Validate credential on server
+			if (connector.login(username, password).getString("result").equals("success")) return true;
+			else return false;
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		
+		return false;
+	}
+	
 	public static void main(String[] args) {
 		try {
 			/* Open socket */
@@ -23,6 +45,8 @@ public class ClientLauncher {
 			BufferedReader inFromUser = new BufferedReader (new InputStreamReader(System.in));
 			String msg = inFromUser.readLine();
 			connector.capitalize(msg); // TODO Current function is for test only
+			
+			login();
 
 		} catch (NumberFormatException e) {
 			e.printStackTrace();

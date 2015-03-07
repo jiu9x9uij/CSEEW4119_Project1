@@ -4,31 +4,65 @@
 package server;
 
 import java.io.BufferedReader;
-import java.io.DataOutputStream;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.io.PrintWriter;
-import java.net.ServerSocket;
-import java.net.Socket;
 import java.util.ArrayList;
+import java.util.HashMap;
 
 /**
  * @author Yilin
  *
  */
-public class ServerLauncher {
+public enum ServerLauncher {
+	INSTANCE;
+	
+	private HashMap<String, User> allClients = new HashMap<String, User>();
+	private HashMap<String, User> onlineClients = new HashMap<String, User>();
+	private HashMap<String, User> offlineClients = new HashMap<String, User>();
 
+	public static ServerLauncher getInstance() {
+		return INSTANCE;
+	}
+	
+	public HashMap<String, User> getAllClients() {
+		return allClients;
+	}
+	
+	public void addClient(User user) {
+		allClients.put(user.getUsername(), user);
+	}
+
+	public HashMap<String, User> getOnlineClients() {
+		return onlineClients;
+	}
+	
+	public void addOnlineClient(User user) {
+		onlineClients.put(user.getUsername(), user);
+	}
+	
+	public void removeOnlineClient(User user) {
+		onlineClients.remove(user.getUsername(), user);
+	}
+	
+	public HashMap<String, User> getOfflineClients() {
+		return offlineClients;
+	}
+	
+	public void addOfflineClient(User user) {
+		offlineClients.put(user.getUsername(), user);
+	}
+	
+	public void removeOfflineClient(User user) {
+		offlineClients.remove(user.getUsername(), user);
+	}
+	
+	
+	
 	/**
 	 * @param args
 	 */
 	public static void main(String[] args) {
-		int port = -1;
-		ServerSocket welcomeSocket = null;
-		ArrayList<User> allClients = new ArrayList<User>();
-		ArrayList<User> onlineClients = new ArrayList<User>();
-		ArrayList<User> offlineClients = new ArrayList<User>();
-		
 		try {
 			/* Store all clients' credentials */
 			String line;
@@ -37,11 +71,15 @@ public class ServerLauncher {
 		 
 			while ((line = bufferedReader.readLine()) != null) {
 				String[] credential = line.split(" ");
-				allClients.add(new User(credential[0], credential[1]));
+				User user = new User(credential[0], credential[1]);
+				ServerLauncher.INSTANCE.addClient(user);
+				ServerLauncher.INSTANCE.addOfflineClient(user); // TODO Not sure if this is needed at all
 			}
 			
-			/* Open welcoming socket */
-			port = Integer.parseInt(args[0]);
+			bufferedReader.close();
+			
+			/* Run server */
+			int port = Integer.parseInt(args[0]);
 			System.out.println(port);///
 			
 			ThreadPooledServer server = new ThreadPooledServer(port);
@@ -55,50 +93,10 @@ public class ServerLauncher {
 //			}
 //			System.out.println("Stopping Server");
 //			server.stop();
-			
-			/* Old method */
-//			welcomeSocket = new ServerSocket(port);
-//			
-//			/* Listen to incoming client requests */
-//			while (true) {
-//				System.out.println("loop");
-//				final ServerSocket welcomeSocketCopy = welcomeSocket;
-//				new Thread(){
-//					public void run() {
-//						System.out.println("new thread");///
-//						Socket connectionSocket = null;
-//						try {
-//							connectionSocket = welcomeSocketCopy.accept();
-//							BufferedReader inFromClient = new BufferedReader (new InputStreamReader(connectionSocket.getInputStream()));
-//							DataOutputStream outToClient = new DataOutputStream(connectionSocket.getOutputStream());
-//							
-//							String clientMsg = inFromClient.readLine(); // TODO Parse JSON, and execute corresponding command
-//							outToClient.writeBytes(clientMsg.toUpperCase() + '\n'); // TODO Current function is for test only
-//						} catch (IOException e) {
-//							e.printStackTrace();
-//						} finally {
-//							try {
-//								connectionSocket.close();
-//							} catch (IOException e) {
-//								e.printStackTrace();
-//							}
-//						}
-//						System.out.println("thread finished");///
-//					}
-//				}.run();
-//				System.out.println("loop2");
-//			}
-			
 		} catch (NumberFormatException e) {
 			e.printStackTrace();
 		} catch (IOException e) {
 			e.printStackTrace();
-		} finally {
-//			try {
-//				welcomeSocket.close();
-//			} catch (IOException e) {
-//				e.printStackTrace();
-//			}
 		}
 	}
 }
