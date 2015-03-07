@@ -1,0 +1,1 @@
+* If there are more than one credentials with the same username, only the last credential will be effective.
