@@ -25,11 +25,9 @@ public class ServerLauncher {
 	public static void main(String[] args) {
 		int port = -1;
 		ServerSocket welcomeSocket = null;
-		Socket connectionSocket = null;
 		ArrayList<User> allClients = new ArrayList<User>();
 		ArrayList<User> onlineClients = new ArrayList<User>();
 		ArrayList<User> offlineClients = new ArrayList<User>();
-		String clientMsg;
 		
 		try {
 			/* Store all clients' credentials */
@@ -45,29 +43,62 @@ public class ServerLauncher {
 			/* Open welcoming socket */
 			port = Integer.parseInt(args[0]);
 			System.out.println(port);///
-			welcomeSocket = new ServerSocket(port);
 			
-			/* Listen to incoming client requests */
-			while (true) {
-				connectionSocket = welcomeSocket.accept();
-				BufferedReader inFromClient = new BufferedReader (new InputStreamReader(connectionSocket.getInputStream()));
-				DataOutputStream outToClient = new DataOutputStream(connectionSocket.getOutputStream());
-				
-				clientMsg = inFromClient.readLine(); // TODO Parse JSON, and execute corresponding command
-				outToClient.writeBytes(clientMsg.toUpperCase() + '\n'); // TODO Current function is for test only
-			}
+			ThreadPooledServer server = new ThreadPooledServer(port);
+			new Thread(server).start();
+
+			/* Proof that server is running in another thread */
+//			try {
+//			    Thread.sleep(20 * 1000);
+//			} catch (InterruptedException e) {
+//			    e.printStackTrace();
+//			}
+//			System.out.println("Stopping Server");
+//			server.stop();
+			
+			/* Old method */
+//			welcomeSocket = new ServerSocket(port);
+//			
+//			/* Listen to incoming client requests */
+//			while (true) {
+//				System.out.println("loop");
+//				final ServerSocket welcomeSocketCopy = welcomeSocket;
+//				new Thread(){
+//					public void run() {
+//						System.out.println("new thread");///
+//						Socket connectionSocket = null;
+//						try {
+//							connectionSocket = welcomeSocketCopy.accept();
+//							BufferedReader inFromClient = new BufferedReader (new InputStreamReader(connectionSocket.getInputStream()));
+//							DataOutputStream outToClient = new DataOutputStream(connectionSocket.getOutputStream());
+//							
+//							String clientMsg = inFromClient.readLine(); // TODO Parse JSON, and execute corresponding command
+//							outToClient.writeBytes(clientMsg.toUpperCase() + '\n'); // TODO Current function is for test only
+//						} catch (IOException e) {
+//							e.printStackTrace();
+//						} finally {
+//							try {
+//								connectionSocket.close();
+//							} catch (IOException e) {
+//								e.printStackTrace();
+//							}
+//						}
+//						System.out.println("thread finished");///
+//					}
+//				}.run();
+//				System.out.println("loop2");
+//			}
 			
 		} catch (NumberFormatException e) {
 			e.printStackTrace();
 		} catch (IOException e) {
 			e.printStackTrace();
 		} finally {
-			try {
-				welcomeSocket.close();
-				connectionSocket.close();
-			} catch (IOException e) {
-				e.printStackTrace();
-			}
+//			try {
+//				welcomeSocket.close();
+//			} catch (IOException e) {
+//				e.printStackTrace();
+//			}
 		}
 	}
 }

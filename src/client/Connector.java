@@ -7,6 +7,8 @@ import java.io.InputStreamReader;
 import java.net.Socket;
 import java.net.UnknownHostException;
 
+import org.json.JSONObject;
+
 public enum Connector {
 	INSTANCE;
 	
@@ -29,9 +31,16 @@ public enum Connector {
 			// Open connection
 			clientSocket = new Socket(host, port);
 			
+			// Build request JSONObject
+			JSONObject request = new JSONObject();
+			request.put("request", "capitalize");
+			JSONObject body = new JSONObject();
+			body.put("msg", msg);
+			request.put("body", body);
+			
 			// Talk to server
 			DataOutputStream outToServer = new DataOutputStream(clientSocket.getOutputStream());
-			outToServer.writeBytes(msg + '\n');
+			outToServer.writeBytes(request.toString() + '\n');
 			
 			// Get response back from server
 			BufferedReader inFromServer = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
