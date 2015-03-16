@@ -42,7 +42,7 @@ public enum ServerLauncher {
 	}
 	
 	public void removeOnlineClient(User user) {
-		onlineClients.remove(user.getUsername(), user);
+		onlineClients.remove(user.getUsername());
 	}
 	
 	public HashMap<String, User> getOfflineClients() {
@@ -54,7 +54,7 @@ public enum ServerLauncher {
 	}
 	
 	public void removeOfflineClient(User user) {
-		offlineClients.remove(user.getUsername(), user);
+		offlineClients.remove(user.getUsername());
 	}
 	
 	

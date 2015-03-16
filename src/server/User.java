@@ -63,7 +63,7 @@ public class User {
 		else return false;
 	}
 
-	public void logoff() {
+	public void logout() {
 		this.address = null;
 		this.port = -1;
 		ServerLauncher.INSTANCE.addOfflineClient(this);

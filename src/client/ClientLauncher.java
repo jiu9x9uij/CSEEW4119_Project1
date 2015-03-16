@@ -1,37 +1,129 @@
 package client;
 
 import java.io.BufferedReader;
-import java.io.DataOutputStream;
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.net.Socket;
-import java.net.UnknownHostException;
 import java.util.Scanner;
 
+import org.json.JSONObject;
+
 public class ClientLauncher {
-	static Connector connector;
+	private static ThreadPooledListener serverListener;
+	private static Connector connector;
+	private static String clientUsername = null;
+	static BufferedReader input;
 	
-	private static boolean login() {
+	public static void terminateClient() {
+		serverListener.stop();
+		System.exit(0);
+	}
+	
+	/** Log in
+	 * @return 1 login successful, proceed;
+	 * 	0 login unsuccessful, retry;
+	 *  -1 login unsuccessful, blocked;
+	 *  -2 exception during login
+	 */
+	private static int login() {
 		String username, password;
 		BufferedReader input = new BufferedReader (new InputStreamReader(System.in));
 		
 		try {
 			// Ask for username
-			System.out.print("username: ");
+			print("username: ");
 			username = input.readLine();
 			// Ask for password
-			System.out.print("password: ");
+			print("password: ");
 			password = input.readLine();
 			
 			// Validate credential on server
-			if (connector.login(username, password).getString("result").equals("success")) return true;
-			else return false;
+			JSONObject response = connector.login(username, password, serverListener.getPort());
+			if (response.getString("result").equals("success")) {
+				clientUsername = username;
+				return 1;
+			}
+			else if (!response.getString("errMsg").contains("blocked")) return 0;
+			else return -1;
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
 		
-		return false;
+		return -2;
 	}
+	
+	private static boolean logout() {
+		if (clientUsername == null) return false;
+		
+		JSONObject response = connector.logout(clientUsername);
+		if (response.getString("result").equals("failure")) return false;
+		else return true;
+	}
+	
+	private static void sendMessage(String command) {
+		// TODO Auto-generated method stub
+		
+	}
+	
+	private static void broadcast(String command) {
+		// TODO Auto-generated method stub
+		
+	}
+	
+	private static void listOnlineUsers() {
+		// TODO Auto-generated method stub
+		
+	}
+	
+	private static void blockUser(String command) {
+		// TODO Auto-generated method stub
+		
+	}
+	
+	private static void unblockUser(String command) {
+		// TODO Auto-generated method stub
+		
+	}
+	
+	private static void getAddressOfUser(String command) {
+		// TODO Auto-generated method stub
+		
+	}
+	
+	private static void sendPrivateMessage(String command) {
+		// TODO Auto-generated method stub
+		
+	}
+	
+	private static void listCommands() {
+		// TODO Auto-generated method stub
+		
+	}
+	
+	/* TEST Simple communication with server through socket */
+	private static void capitalize() {
+		String msg;
+		BufferedReader input = new BufferedReader (new InputStreamReader(System.in));
+		
+		try {
+			msg = input.readLine();
+			connector.capitalize(msg);
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
+	
+	public static void println(String s) {
+		System.out.println(s);
+	}
+	
+	public static void print(String s) {
+		System.out.println(s);
+	}
+	
+	
+	
 	
 	public static void main(String[] args) {
 		try {
@@ -42,17 +134,50 @@ public class ClientLauncher {
 			connector = Connector.INSTANCE;
 			connector.init(host, port);
 			
-			BufferedReader inFromUser = new BufferedReader (new InputStreamReader(System.in));
-			String msg = inFromUser.readLine();
-			connector.capitalize(msg); // TODO Current function is for test only
+//			capitalize(); ///
 			
-			login();
+			/* Listen to server and P2P messages in thread pool */
+			serverListener = new ThreadPooledListener();
+			new Thread(serverListener).start();
+			
+			/* Log in */
+			int result;
+			while ((result = login()) != 1) {
+				// If blocked by server, terminate client
+				if (result == -1) return;
+			}
+			
+			/* Listen to user command until logout command or terminated by server*/
+			String command;
+			input = new BufferedReader (new InputStreamReader(System.in));
+			try {
+				// Listen to commands
+				while (true) {
+					command = input.readLine();
+					if (command.equals("logout")) {
+						logout();
+						break;
+					}
+					
+					if (command.startsWith("message")) sendMessage(command);
+					else if (command.startsWith("broadcast")) broadcast(command);
+					else if (command.equals("online")) listOnlineUsers();
+					else if (command.startsWith("block")) blockUser(command);
+					else if (command.startsWith("unblock")) unblockUser(command);
+					else if (command.startsWith("getaddress")) getAddressOfUser(command);
+					else if (command.startsWith("private")) sendPrivateMessage(command);
+					else if (command.equals("help")) listCommands();
+					else println("ERROR: Invalid command. Type \"help\" to see list of commands.");
+				}
+				
+				// User requested to log out, shut down client-side listener
+				serverListener.stop();
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
 
 		} catch (NumberFormatException e) {
 			e.printStackTrace();
-		} catch (IOException e) {
-			e.printStackTrace();
-		} 
+		}
 	}
-
 }

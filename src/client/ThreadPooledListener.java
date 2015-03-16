@@ -1,4 +1,4 @@
-package server;
+package client;
 
 import java.io.BufferedReader;
 import java.io.DataOutputStream;
@@ -12,20 +12,17 @@ import java.util.concurrent.Executors;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-public class ThreadPooledServer implements Runnable{
-	protected int port = 8080;
+public class ThreadPooledListener implements Runnable{
+	protected String address = null;
+	protected int port = 0;
 	protected ServerSocket welcomeSocket = null;
 	protected boolean isStopped = false;
 	protected Thread runningThread= null;
 	protected ExecutorService threadPool = Executors.newFixedThreadPool(10);
 
-    public ThreadPooledServer(int port){
-        this.port = port;
-    }
-
     public void run(){
         synchronized(this){
-            this.runningThread = Thread.currentThread();
+            runningThread = Thread.currentThread();
         }
         
         openWelcomeSocket();
@@ -34,31 +31,30 @@ public class ThreadPooledServer implements Runnable{
             Socket clientSocket = null;
             
             try {
-                clientSocket = this.welcomeSocket.accept();
-                this.threadPool.execute(new RequestWorkerRunnable(clientSocket, "Thread Pooled Server"));
+                clientSocket = welcomeSocket.accept();
+                threadPool.execute(new RequestWorkerRunnable(clientSocket, "Thread Pooled Client"));
             } catch (IOException e) {
                 if(isStopped()) {
-                    System.out.println("IOException Server Stopped.") ;
+//                    System.out.println("IOException Server Stopped.");///
                     break;
                 }
-                throw new RuntimeException(
-                    "Error accepting client connection", e);
+                throw new RuntimeException("Error accepting client connection", e);
             }
         }
         
-        this.threadPool.shutdown();
-        System.out.println("Server Stopped.") ;
+        threadPool.shutdown();
+//        System.out.println("Server Stopped.");///
     }
 
 
     private synchronized boolean isStopped() {
-        return this.isStopped;
+        return isStopped;
     }
 
     public synchronized void stop(){
-        this.isStopped = true;
+        isStopped = true;
         try {
-            this.welcomeSocket.close();
+            welcomeSocket.close();
         } catch (IOException e) {
             throw new RuntimeException("Error closing server", e);
         }
@@ -66,9 +62,15 @@ public class ThreadPooledServer implements Runnable{
 
     private void openWelcomeSocket() {
         try {
-            this.welcomeSocket = new ServerSocket(this.port);
+            welcomeSocket = new ServerSocket(0);
+            port = welcomeSocket.getLocalPort();
+//            System.out.println("port = " + port);///
         } catch (IOException e) {
-            throw new RuntimeException("Cannot open port " + port, e);
+            throw new RuntimeException("Cannot open port " + 0, e);
         }
+    }
+    
+    public int getPort() {
+    	return port;
     }
 }

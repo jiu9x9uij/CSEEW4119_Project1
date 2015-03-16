@@ -4,11 +4,16 @@ import java.io.BufferedReader;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.net.ConnectException;
 import java.net.Socket;
+import java.net.UnknownHostException;
 
 import org.json.JSONException;
 import org.json.JSONObject;
 
+/**
+ * Server-side worker thread
+ */
 public class RequestWorkerRunnable implements Runnable{
 
     protected Socket connectionSocket = null;
@@ -36,11 +41,12 @@ public class RequestWorkerRunnable implements Runnable{
 			// Execute corresponding method
             JSONObject serverResponse;
             if (request.equals("login")) serverResponse = login(body);
+            else if (request.equals("logout")) serverResponse = logout(body);
             else if (request.equals("capitalize")) serverResponse = capitalize(body);
             else serverResponse = responseOK();
         	
         	/* Respond to client */
-        	System.out.println("---response---\n" + serverResponse + "------end-----"); // DEBUG Response content
+        	System.out.println("---response---\n" + serverResponse + "\n------end-----"); // DEBUG Response content
         	DataOutputStream outToClient = new DataOutputStream(connectionSocket.getOutputStream());
 			outToClient.writeBytes(serverResponse.toString() + '\n');
         	
@@ -54,7 +60,7 @@ public class RequestWorkerRunnable implements Runnable{
 			e.printStackTrace();
 		}
     	
-    	System.out.println("######### Done #########"); // DEBUG Request processed
+    	System.out.println("######### Done #########\n"); // DEBUG Request processed
     }
     
     /* Validate login credential */
@@ -63,7 +69,6 @@ public class RequestWorkerRunnable implements Runnable{
 
     	String username = body.getString("username");
     	String password = body.getString("password");
-    	String address = body.getString("address");
     	int port = body.getInt("port");
     	User user = (User) ServerLauncher.INSTANCE.getAllClients().get(username);
     	if (user == null) {
@@ -87,21 +92,83 @@ public class RequestWorkerRunnable implements Runnable{
     		}
     	} else {
     		// Credential validated
+    		String address = connectionSocket.getRemoteSocketAddress().toString();
     		if (user.isOnline()) {
-    			// TODO Notify previous address about duplicated login
-    			user.getAddress();
-    			user.getPort();
+    			notify(user.getAddress(), user.getPort(), "You have been logged out because your account is logged in somewhere else.");
     		}
+    		address = address.substring(1);
+    		address = address.split(":")[0];
     		user.login(address, port);
     		response.put("result", "success");
         	response.put("response", "Welcome to simple chat server!");
     	}
     	
-    	// Update statuses of this user
-    	if (user != null) ServerLauncher.INSTANCE.getAllClients().put(user.getUsername(), user);
-    	
     	return response;
     }
+    
+    private JSONObject logout(JSONObject body) {
+    	JSONObject response = new JSONObject();
+
+    	String username = body.getString("username");
+    	User user = (User) ServerLauncher.INSTANCE.getAllClients().get(username);
+    	if (user == null) {
+    		// Credential does not exist, should not happen
+    		response.put("result", "failure");
+        	response.put("errMsg", "No such user. Something is wrong.");
+    	}
+    	
+    	user.logout();
+    	response.put("result", "success");
+    	response.put("response", "You have successfully logged out.");
+    	return response;
+    }
+    
+    /* TODO Notify previous address about duplicated login */
+    private JSONObject notify(String address, int port, String msg) {
+    	JSONObject response = null;
+    	
+    	Socket clientSocket = null;
+    	try {
+			// Open connection
+			clientSocket = new Socket(address, port);
+			// Build request JSONObject
+			JSONObject request = new JSONObject();
+			request.put("request", "notify");
+			JSONObject body = new JSONObject();
+			body.put("content", msg);
+			request.put("body", body);
+			
+			// Talk to client
+			DataOutputStream outToClient = new DataOutputStream(clientSocket.getOutputStream());
+			outToClient.writeBytes(request.toString() + '\n');
+			
+			// Get response back from client
+			if (!msg.contains("logged out")) {
+				BufferedReader inFromClient = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
+				response = new JSONObject(inFromClient.readLine());
+//				printClientResponse(response);
+			}
+			
+			// Close connection
+			clientSocket.close();	
+		} catch (UnknownHostException e) {
+			e.printStackTrace();
+		} catch (ConnectException e) {
+			e.printStackTrace();
+		} catch (IOException e) {
+			e.printStackTrace();
+		} catch (NullPointerException e) {
+			e.printStackTrace();
+		} finally {
+			try {
+				clientSocket.close();
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		}
+    	
+    	return response;
+	}
     
     /* TEST Echo capitalized version of client input */
     private JSONObject capitalize(JSONObject body) {
