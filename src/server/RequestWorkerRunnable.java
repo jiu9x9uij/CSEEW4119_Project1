@@ -7,6 +7,8 @@ import java.io.InputStreamReader;
 import java.net.ConnectException;
 import java.net.Socket;
 import java.net.UnknownHostException;
+import java.util.HashMap;
+import java.util.concurrent.ConcurrentLinkedQueue;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -41,8 +43,11 @@ public class RequestWorkerRunnable implements Runnable{
 			// Execute corresponding method
             JSONObject serverResponse;
             if (request.equals("login")) serverResponse = login(body);
+            else if (request.equals("getofflinemsgs")) serverResponse = getOfflineMsgs(body);
             else if (request.equals("logout")) serverResponse = logout(body);
             else if (request.equals("message")) serverResponse = message(body);
+            else if (request.equals("broadcast")) serverResponse = broadcast(body);
+            else if (request.equals("block")) serverResponse = block(body);
             else if (request.equals("capitalize")) serverResponse = capitalize(body);
             else serverResponse = responseOK();
         	
@@ -63,8 +68,8 @@ public class RequestWorkerRunnable implements Runnable{
     	
     	System.out.println("######### Done #########\n"); // DEBUG Request processed
     }
-    
-    /* Validate login credential */
+
+	/* Validate login credential */
     private JSONObject login(JSONObject body) {
     	JSONObject response = new JSONObject();
 
@@ -107,6 +112,32 @@ public class RequestWorkerRunnable implements Runnable{
     	return response;
     }
     
+    /* Send messages received when client was offline */
+    private JSONObject getOfflineMsgs(JSONObject body) {
+    	JSONObject response = new JSONObject();
+    	
+    	String username = body.getString("username");
+    	User user = (User) ServerLauncher.INSTANCE.getAllClients().get(username);
+    	ConcurrentLinkedQueue<Message> offlineMsgs =  user.getOfflineMsgs();
+    	
+    	if (offlineMsgs.isEmpty()) {
+    		response.put("result", "failure");
+        	response.put("errMsg", "No offline messages.");
+    	}
+    	else {
+    		response.put("result", "success");
+        	response.put("response", "Offline messages retrieved.");
+    	}
+    	
+    	// Dequeue offline messages
+    	while (!offlineMsgs.isEmpty()) {
+    		Message m = offlineMsgs.remove();
+    		forwardMessage(user.getAddress(), user.getPort(), m.getSender(), m.getContent());
+    	}
+    	
+    	return response;
+	}
+    
     /* Log out */
     private JSONObject logout(JSONObject body) {
     	JSONObject response = new JSONObject();
@@ -125,7 +156,7 @@ public class RequestWorkerRunnable implements Runnable{
     	return response;
     }
     
-    /* TODO Send message to a client */
+    /* Send message to a client */
     private JSONObject message(JSONObject body) {
     	JSONObject response = new JSONObject();
 
@@ -154,6 +185,43 @@ public class RequestWorkerRunnable implements Runnable{
     	
     	return response;
     }
+    
+    /* Broadcast a message from a client to every other client */
+    private JSONObject broadcast(JSONObject body) {
+    	JSONObject response = new JSONObject();
+    	boolean blockedBySome = false;
+
+    	String usernameSender = body.getString("sender");
+    	String msg = body.getString("msg");
+    	HashMap<String, User> allClients = ServerLauncher.INSTANCE.getAllClients();
+    	for (User receiver: allClients.values()) {
+    		// Skip the sender
+    		if (receiver.getUsername().equals(usernameSender)) continue;
+    		
+    		// Sender is blocked by this user
+    		if (receiver.blocked(usernameSender)) {
+    			blockedBySome = true;
+    			continue;
+    		}
+    		
+    		// If this user is online, send message
+    		if (receiver.isOnline()) {
+    			forwardMessage(receiver.getAddress(), receiver.getPort(), usernameSender, msg);
+    		}
+    	}
+    	
+    	// Response to sender
+    	if (blockedBySome) {
+    		response.put("result", "failure");
+        	response.put("errMsg", "Your message could not be delivered to some recipients.");
+		}
+    	else {
+    		response.put("result", "success");
+        	response.put("response", "Message broadcasted.");
+    	}
+    	
+    	return response;
+	}
     
     /* Forward message to client */
     private JSONObject forwardMessage(String address, int port, String username, String msg) {
@@ -245,6 +313,12 @@ public class RequestWorkerRunnable implements Runnable{
 		}
     	
     	return response;
+	}
+    
+    /* TODO Block a user */
+    private JSONObject block(JSONObject body) {
+		// TODO Auto-generated method stub
+		return null;
 	}
     
     /* TEST Echo capitalized version of client input */

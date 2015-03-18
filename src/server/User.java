@@ -71,6 +71,10 @@ public class User {
 		ServerLauncher.INSTANCE.removeOnlineClient(this);
 	}
 	
+	public ConcurrentLinkedQueue<Message> getOfflineMsgs() {
+		return offlineMsgs;
+	}
+	
 	public void addOfflineMsg(String sender, String msg) {
 		offlineMsgs.add(new Message(sender, msg));
 	}

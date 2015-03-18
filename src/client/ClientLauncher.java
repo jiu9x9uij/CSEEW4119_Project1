@@ -37,6 +37,7 @@ public class ClientLauncher {
 			
 			// Validate credential on server
 			JSONObject response = connector.login(username, password, serverListener.getPort());
+			printServerResponse(response);
 			if (response.getString("result").equals("success")) {
 				clientUsername = username;
 				return 1;
@@ -50,10 +51,18 @@ public class ClientLauncher {
 		return -2;
 	}
 	
+	private static void getOfflineMsgs() {
+		println("--------- Offline Messages ---------");
+		JSONObject response = connector.getOfflineMsgs(clientUsername);
+		if (response.getString("result").equals("failure")) println(response.getString("errMsg"));
+		println("------------------------------------");
+	}
+	
 	private static boolean logout() {
 		if (clientUsername == null) return false;
 		
 		JSONObject response = connector.logout(clientUsername);
+		printServerResponse(response);
 		if (response.getString("result").equals("failure")) return false;
 		else return true;
 	}
@@ -67,13 +76,28 @@ public class ClientLauncher {
 		
 		String usernameReceiver = args[1];
 		String msg = new String();
-		for (int i = 2; i < args.length; i++) msg += args[i];
+		for (int i = 2; i < args.length; i++) {
+			if (i == 2) msg += args[i];
+			else msg += (" " + args[i]);
+		}
 		JSONObject response = connector.sendMessage(clientUsername, usernameReceiver, msg);
+		printServerResponse(response);
 	}
 	
 	private static void broadcast(String command) {
-		// TODO Auto-generated method stub
+		String[] args = command.split(" ");
+		if (args.length < 2) {
+			println("ERROR: Invalid command format. Please use \"broadcast <message content>\"");
+			return;
+		}
 		
+		String msg = new String();
+		for (int i = 1; i < args.length; i++) {
+			if (i == 1) msg += args[i];
+			else msg += (" " + args[i]);
+		}
+		JSONObject response = connector.broadcast(clientUsername, msg);
+		printServerResponse(response);
 	}
 	
 	private static void listOnlineUsers() {
@@ -113,10 +137,18 @@ public class ClientLauncher {
 		
 		try {
 			msg = input.readLine();
-			connector.capitalize(msg);
+			JSONObject response = connector.capitalize(msg);
+			printServerResponse(response);
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
+	}
+	
+	private static void printServerResponse(JSONObject response) {
+//		System.out.println("---Server Response---");
+		if (response.getString("result").equals("success")) System.out.println(response.getString("response"));
+		else System.out.println("ERROR: " + response.getString("errMsg"));
+//		System.out.println("---------End---------");
 	}
 	
 	public static void println(String s) {
@@ -151,6 +183,9 @@ public class ClientLauncher {
 				// If blocked by server, terminate client
 				if (result == -1) return;
 			}
+			
+			/* Get offline messages */
+			getOfflineMsgs();
 			
 			/* Listen to user command until logout command or terminated by server*/
 			String command;

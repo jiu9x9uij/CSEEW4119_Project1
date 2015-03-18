@@ -25,13 +25,6 @@ public enum Connector {
 		this.port = port;
 	}
 	
-	private void printServerResponse(JSONObject response) {
-//		System.out.println("---Server Response---");
-		if (response.getString("result").equals("success")) System.out.println(response.getString("response"));
-		else System.out.println("ERROR: " + response.getString("errMsg"));
-//		System.out.println("---------End---------");
-	}
-	
 	/** Log in
 	 * @param username
 	 * @param password
@@ -64,7 +57,6 @@ public enum Connector {
 			// Get response back from server
 			BufferedReader inFromServer = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
 			response = new JSONObject(inFromServer.readLine());
-			printServerResponse(response);
 			
 			// Close connection
 			clientSocket.close();	
@@ -84,6 +76,52 @@ public enum Connector {
 		
 		return response;
 	}
+	
+	/** Get msgs sent to user while user was offline
+	 * @return response JSONObject with key <tt>result</tt> ("success" / "failure"),
+	 *  <tt>response</tt> that contains the success notification (only exists if code is "success"),
+	 *   and <tt>errMsg</tt> (only exists if code is "failure")
+	 */
+	public JSONObject getOfflineMsgs(String clientUsername) {
+		JSONObject response = null;
+		
+		try {
+			// Open connection
+			clientSocket = new Socket(host, port);
+			
+			// Build request JSONObject
+			JSONObject request = new JSONObject();
+			request.put("request", "getofflinemsgs");
+			JSONObject body = new JSONObject();
+			body.put("username", clientUsername);
+			request.put("body", body);
+			
+			// Talk to server
+			DataOutputStream outToServer = new DataOutputStream(clientSocket.getOutputStream());
+			outToServer.writeBytes(request.toString() + '\n');
+			
+			// Get response back from server
+			BufferedReader inFromServer = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
+			response = new JSONObject(inFromServer.readLine());
+			
+			// Close connection
+			clientSocket.close();
+		} catch (UnknownHostException e) {
+			e.printStackTrace();
+		} catch (IOException e) {
+			e.printStackTrace();
+		} catch (NullPointerException e) {
+			e.printStackTrace();
+		} finally {
+			try {
+				clientSocket.close();
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		}
+		
+		return response;
+	}	
 	
 	/** Log out
 	 * @return response JSONObject with key <tt>result</tt> ("success" / "failure"),
@@ -111,7 +149,6 @@ public enum Connector {
 			// Get response back from server
 			BufferedReader inFromServer = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
 			response = new JSONObject(inFromServer.readLine());
-			printServerResponse(response);
 			
 			// Close connection
 			clientSocket.close();
@@ -160,7 +197,53 @@ public enum Connector {
 			// Get response back from server
 			BufferedReader inFromServer = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
 			response = new JSONObject(inFromServer.readLine());
-			printServerResponse(response);
+			
+			// Close connection
+			clientSocket.close();
+		} catch (UnknownHostException e) {
+			e.printStackTrace();
+		} catch (IOException e) {
+			e.printStackTrace();
+		} catch (NullPointerException e) {
+			e.printStackTrace();
+		} finally {
+			try {
+				clientSocket.close();
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		}
+		
+		return response;
+	}
+	
+	/** Send message through server
+	 * @return response JSONObject with key <tt>result</tt> ("success" / "failure"),
+	 *  <tt>response</tt> that contains the success msg (only exists if code is "success"),
+	 *   and <tt>errMsg</tt> (only exists if code is "failure")
+	 */
+	public JSONObject broadcast(String clientUsername, String msg) {
+JSONObject response = null;
+		
+		try {
+			// Open connection
+			clientSocket = new Socket(host, port);
+			
+			// Build request JSONObject
+			JSONObject request = new JSONObject();
+			request.put("request", "broadcast");
+			JSONObject body = new JSONObject();
+			body.put("sender", clientUsername);
+			body.put("msg", msg);
+			request.put("body", body);
+			
+			// Talk to server
+			DataOutputStream outToServer = new DataOutputStream(clientSocket.getOutputStream());
+			outToServer.writeBytes(request.toString() + '\n');
+			
+			// Get response back from server
+			BufferedReader inFromServer = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
+			response = new JSONObject(inFromServer.readLine());
 			
 			// Close connection
 			clientSocket.close();
@@ -208,7 +291,6 @@ public enum Connector {
 			// Get response back from server
 			BufferedReader inFromServer = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
 			response = new JSONObject(inFromServer.readLine());
-			printServerResponse(response);
 			
 			// Close connection
 			clientSocket.close();	
@@ -225,5 +307,5 @@ public enum Connector {
 		}
 
 		return response;
-	}	
+	}
 }
