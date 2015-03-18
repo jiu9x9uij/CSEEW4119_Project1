@@ -4,6 +4,7 @@ import java.io.BufferedReader;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.net.ConnectException;
 import java.net.Socket;
 import java.net.UnknownHostException;
 
@@ -59,6 +60,11 @@ public enum Connector {
 			
 			// Close connection
 			clientSocket.close();	
+		} catch (ConnectException e) {
+//			e.printStackTrace();
+			response = new JSONObject();
+			response.put("result", "failure");
+        	response.put("errMsg", "Server cannot be reached. Please make sure server is running.");
 		} catch (UnknownHostException e) {
 			e.printStackTrace();
 		} catch (IOException e) {
@@ -67,7 +73,7 @@ public enum Connector {
 			e.printStackTrace();
 		} finally {
 			try {
-				clientSocket.close();
+				if (clientSocket != null) clientSocket.close();
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
@@ -105,6 +111,11 @@ public enum Connector {
 			
 			// Close connection
 			clientSocket.close();
+		} catch (ConnectException e) {
+//			e.printStackTrace();
+			response = new JSONObject();
+			response.put("result", "failure");
+        	response.put("errMsg", "Server cannot be reached. Please make sure server is running.");
 		} catch (UnknownHostException e) {
 			e.printStackTrace();
 		} catch (IOException e) {
@@ -113,7 +124,7 @@ public enum Connector {
 			e.printStackTrace();
 		} finally {
 			try {
-				clientSocket.close();
+				if (clientSocket != null) clientSocket.close();
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
@@ -151,6 +162,11 @@ public enum Connector {
 			
 			// Close connection
 			clientSocket.close();
+		} catch (ConnectException e) {
+//			e.printStackTrace();
+			response = new JSONObject();
+			response.put("result", "failure");
+        	response.put("errMsg", "Server cannot be reached. Please make sure server is running.");
 		} catch (UnknownHostException e) {
 			e.printStackTrace();
 		} catch (IOException e) {
@@ -159,7 +175,7 @@ public enum Connector {
 			e.printStackTrace();
 		} finally {
 			try {
-				clientSocket.close();
+				if (clientSocket != null) clientSocket.close();
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
@@ -199,6 +215,11 @@ public enum Connector {
 			
 			// Close connection
 			clientSocket.close();
+		} catch (ConnectException e) {
+//			e.printStackTrace();
+			response = new JSONObject();
+			response.put("result", "failure");
+        	response.put("errMsg", "Server cannot be reached. Please make sure server is running.");
 		} catch (UnknownHostException e) {
 			e.printStackTrace();
 		} catch (IOException e) {
@@ -207,7 +228,7 @@ public enum Connector {
 			e.printStackTrace();
 		} finally {
 			try {
-				clientSocket.close();
+				if (clientSocket != null) clientSocket.close();
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
@@ -216,7 +237,7 @@ public enum Connector {
 		return response;
 	}
 	
-	/** Send message through server
+	/** Broadcast message to every other online user
 	 * @return response JSONObject with key <tt>result</tt> ("success" / "failure"),
 	 *  <tt>response</tt> that contains the success msg (only exists if code is "success"),
 	 *   and <tt>errMsg</tt> (only exists if code is "failure")
@@ -246,6 +267,11 @@ public enum Connector {
 			
 			// Close connection
 			clientSocket.close();
+		} catch (ConnectException e) {
+//			e.printStackTrace();
+			response = new JSONObject();
+			response.put("result", "failure");
+        	response.put("errMsg", "Server cannot be reached. Please make sure server is running.");
 		} catch (UnknownHostException e) {
 			e.printStackTrace();
 		} catch (IOException e) {
@@ -254,7 +280,7 @@ public enum Connector {
 			e.printStackTrace();
 		} finally {
 			try {
-				clientSocket.close();
+				if (clientSocket != null) clientSocket.close();
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
@@ -293,6 +319,11 @@ public enum Connector {
 			
 			// Close connection
 			clientSocket.close();
+		} catch (ConnectException e) {
+//			e.printStackTrace();
+			response = new JSONObject();
+			response.put("result", "failure");
+        	response.put("errMsg", "Server cannot be reached. Please make sure server is running.");
 		} catch (UnknownHostException e) {
 			e.printStackTrace();
 		} catch (IOException e) {
@@ -301,7 +332,7 @@ public enum Connector {
 			e.printStackTrace();
 		} finally {
 			try {
-				clientSocket.close();
+				if (clientSocket != null) clientSocket.close();
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
@@ -340,6 +371,11 @@ public enum Connector {
 			
 			// Close connection
 			clientSocket.close();
+		} catch (ConnectException e) {
+//			e.printStackTrace();
+			response = new JSONObject();
+			response.put("result", "failure");
+        	response.put("errMsg", "Server cannot be reached. Please make sure server is running.");
 		} catch (UnknownHostException e) {
 			e.printStackTrace();
 		} catch (IOException e) {
@@ -348,7 +384,7 @@ public enum Connector {
 			e.printStackTrace();
 		} finally {
 			try {
-				clientSocket.close();
+				if (clientSocket != null) clientSocket.close();
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
@@ -357,7 +393,7 @@ public enum Connector {
 		return response;
 	}
 	
-	/** Unblock a specified user
+	/** Get list of all online users
 	 * @return response JSONObject with key <tt>result</tt> ("success" / "failure"),
 	 *  <tt>response</tt> that contains the success msg (only exists if code is "success"),
 	 *   and <tt>errMsg</tt> (only exists if code is "failure")
@@ -385,6 +421,11 @@ public enum Connector {
 			
 			// Close connection
 			clientSocket.close();
+		} catch (ConnectException e) {
+//			e.printStackTrace();
+			response = new JSONObject();
+			response.put("result", "failure");
+        	response.put("errMsg", "Server cannot be reached. Please make sure server is running.");
 		} catch (UnknownHostException e) {
 			e.printStackTrace();
 		} catch (IOException e) {
@@ -393,7 +434,116 @@ public enum Connector {
 			e.printStackTrace();
 		} finally {
 			try {
-				clientSocket.close();
+				if (clientSocket != null) clientSocket.close();
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		}
+		
+		return response;
+	}
+	
+	/** Get address and port of specified user
+	 * @return response JSONObject with key <tt>result</tt> ("success" / "failure"),
+	 *  <tt>response</tt> that contains the success msg (only exists if code is "success"),
+	 *   and <tt>errMsg</tt> (only exists if code is "failure")
+	 */
+	public JSONObject getAddress(String clientUsername, String usernameToGetAddress) {
+		JSONObject response = null;
+		
+		try {
+			// Open connection
+			clientSocket = new Socket(host, port);
+			
+			// Build request JSONObject
+			JSONObject request = new JSONObject();
+			request.put("request", "getAddress");
+			JSONObject body = new JSONObject();
+			body.put("username", clientUsername);
+			body.put("usernameToGetAddress", usernameToGetAddress);
+			request.put("body", body);
+			
+			// Talk to server
+			DataOutputStream outToServer = new DataOutputStream(clientSocket.getOutputStream());
+			outToServer.writeBytes(request.toString() + '\n');
+			
+			// Get response back from server
+			BufferedReader inFromServer = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
+			response = new JSONObject(inFromServer.readLine());
+			
+			// Close connection
+			clientSocket.close();
+		} catch (ConnectException e) {
+//			e.printStackTrace();
+			response = new JSONObject();
+			response.put("result", "failure");
+        	response.put("errMsg", "Server cannot be reached. Please make sure server is running.");
+		} catch (UnknownHostException e) {
+			e.printStackTrace();
+		} catch (IOException e) {
+			e.printStackTrace();
+		} catch (NullPointerException e) {
+			e.printStackTrace();
+		} finally {
+			try {
+				if (clientSocket != null) clientSocket.close();
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		}
+		
+		return response;
+	}
+	
+	/** Send P2P message directly to specified user
+	 * @return response JSONObject with key <tt>result</tt> ("success" / "failure"),
+	 *  <tt>response</tt> that contains the success msg (only exists if code is "success"),
+	 *   and <tt>errMsg</tt> (only exists if code is "failure")
+	 */
+	public JSONObject sendPrivateMessage(String usernameSender, Contact receiver, String msg) {
+		JSONObject response = null;
+		
+		try {
+			// Open connection
+			clientSocket = new Socket(receiver.getAddress(), receiver.getPort());
+			
+			// Build request JSONObject
+			JSONObject request = new JSONObject();
+			request.put("request", "message");
+			JSONObject body = new JSONObject();
+			body.put("sender", usernameSender);
+			body.put("receiver", receiver.getUsername());
+			body.put("content", msg);
+			request.put("body", body);
+			
+			// Talk to server
+			DataOutputStream outToServer = new DataOutputStream(clientSocket.getOutputStream());
+			outToServer.writeBytes(request.toString() + '\n');
+			
+			// Get response back from server
+			BufferedReader inFromServer = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
+			response = new JSONObject(inFromServer.readLine());
+			
+			// Close connection
+			clientSocket.close();
+		} catch (ConnectException e) {
+//			e.printStackTrace();
+			response = new JSONObject();
+			response.put("result", "failure");
+        	response.put("errMsg", "Client cannot be reached.");
+		} catch (IllegalArgumentException e) {
+			response = new JSONObject();
+			response.put("result", "failure");
+        	response.put("errMsg", "Client has never logged into server.");
+		} catch (UnknownHostException e) {
+			e.printStackTrace();
+		} catch (IOException e) {
+			e.printStackTrace();
+		} catch (NullPointerException e) {
+			e.printStackTrace();
+		} finally {
+			try {
+				if (clientSocket != null) clientSocket.close();
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
@@ -432,13 +582,18 @@ public enum Connector {
 			
 			// Close connection
 			clientSocket.close();	
+		} catch (ConnectException e) {
+//			e.printStackTrace();
+			response = new JSONObject();
+			response.put("result", "failure");
+        	response.put("errMsg", "Server cannot be reached. Please make sure server is running.");
 		} catch (UnknownHostException e) {
 			e.printStackTrace();
 		} catch (IOException e) {
 			e.printStackTrace();
 		} finally {
 			try {
-				clientSocket.close();
+				if (clientSocket != null) clientSocket.close();
 			} catch (IOException e) {
 				e.printStackTrace();
 			}

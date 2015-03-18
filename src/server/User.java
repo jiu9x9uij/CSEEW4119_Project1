@@ -6,13 +6,13 @@ import java.util.HashSet;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
 public class User {
-	String username, password;
-	int numOfLoginAttemps = 0;
-	long timestampOfBlocking = -1;
-	String address = null;
-	int port = -1;
-	ConcurrentLinkedQueue<Message> offlineMsgs = new ConcurrentLinkedQueue<Message>();
-	HashSet<String> blackList = new HashSet<String>();
+	private String username, password;
+	private int numOfLoginAttemps = 0;
+	private long timestampOfBlocking = -1;
+	private String address = "";
+	private int port = -1;
+	private ConcurrentLinkedQueue<Message> offlineMsgs = new ConcurrentLinkedQueue<Message>();
+	private HashSet<String> blackList = new HashSet<String>();
 	
 	public User(String username, String password) {
 		this.username = username;
@@ -65,8 +65,8 @@ public class User {
 	}
 
 	public void logout() {
-		this.address = null;
-		this.port = -1;
+//		this.address = null;
+//		this.port = -1;
 		ServerLauncher.INSTANCE.addOfflineClient(this);
 		ServerLauncher.INSTANCE.removeOnlineClient(this);
 	}

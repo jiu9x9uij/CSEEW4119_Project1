@@ -3,6 +3,8 @@ package client;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.net.ConnectException;
+import java.util.HashMap;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -11,7 +13,8 @@ public class ClientLauncher {
 	private static ThreadPooledListener serverListener;
 	private static Connector connector;
 	private static String clientUsername = null;
-	static BufferedReader input;
+	private static HashMap<String, Contact> privateContacts = new HashMap<String, Contact>();
+	private static BufferedReader input;
 	
 	public static void terminateClient() {
 		serverListener.stop();
@@ -53,8 +56,8 @@ public class ClientLauncher {
 	}
 	
 	private static void getOfflineMsgs() {
-		JSONObject response = connector.getOfflineMsgs(clientUsername);
 		println("--------- Offline Messages ---------");
+		JSONObject response = connector.getOfflineMsgs(clientUsername);
 		if (response.getString("result").equals("failure")) println(response.getString("errMsg"));
 		println("------------------------------------");
 	}
@@ -135,18 +138,80 @@ public class ClientLauncher {
 	}
 	
 	private static void getAddressOfUser(String command) {
-		// TODO Auto-generated method stub
+		String[] args = command.split(" ");
+		if (args.length != 2) {
+			println("ERROR: Invalid command format. Please use \"getaddress <username>\"");
+			return;
+		}
+		JSONObject response = connector.getAddress(clientUsername, args[1]);
 		
+//		printServerResponse(response);
+		if (response.getString("result").equals("failure")) printServerResponse(response);
+		else {
+			String address = (String) response.getJSONObject("response").get("address");
+			int port = (Integer) response.getJSONObject("response").get("port");
+			privateContacts.put(args[1], new Contact(args[1], address, port));
+			
+			println("----- Added To Private Contacts ----");
+			println("username: " + args[1]);
+			println("address: " + address);
+			println("port: " + port);
+			println("------------------------------------");
+		}
 	}
 	
 	private static void sendPrivateMessage(String command) {
-		// TODO Auto-generated method stub
+		String[] args = command.split(" ");
+		if (args.length < 3) {
+			println("ERROR: Invalid command format. Please use \"private <username> <message content>\"");
+			return;
+		}
 		
+		String usernameReceiver = args[1];
+		if (!privateContacts.containsKey(usernameReceiver)) {
+			println("ERROR: You do not have this user's contact. Please first use \"getaddress <username>\"");
+			return;
+		}
+		
+		String msg = new String();
+		for (int i = 2; i < args.length; i++) {
+			if (i == 2) msg += args[i];
+			else msg += (" " + args[i]);
+		}
+		JSONObject response = connector.sendPrivateMessage(clientUsername, privateContacts.get(usernameReceiver), msg);
+		
+		printServerResponse(response);
+		if (response.getString("result").equals("failure")) {
+			// Ask if user want to send through server offline message
+			print("Would you like to send this message through server as offline message? (Y/N) ");
+			try {
+				String answer = input.readLine();
+				while (!answer.toLowerCase().equals("y") && !answer.toLowerCase().equals("n")) {
+					print("Please answer with \"Y\" or \"N\" (not case-sensitive).");
+					answer = input.readLine();
+				}
+				if (answer.toLowerCase().equals("y")) {
+					connector.sendMessage(clientUsername, args[1], msg);
+					println("Message sent to server.");
+				} else println("Message discarded.");
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		}
 	}
 	
 	private static void listCommands() {
-		// TODO Auto-generated method stub
-		
+		println("-------- Available Commands --------");
+		println("block <username>");
+		println("broadcast <message content>");
+		println("getaddress <username>");
+		println("help");
+		println("logout");
+		println("message <username> <message content>");
+		println("online");
+		println("unblock <username>");
+		println("private <username> <message content>");
+		println("------------------------------------");
 	}
 	
 	/* TEST Simple communication with server through socket */
@@ -200,7 +265,10 @@ public class ClientLauncher {
 			int result;
 			while ((result = login()) != 1) {
 				// If blocked by server, terminate client
-				if (result == -1) return;
+				if (result == -1) {
+					serverListener.stop();
+					return;
+				}
 			}
 			
 			/* Get offline messages */

@@ -51,6 +51,7 @@ public class RequestWorkerRunnable implements Runnable{
             else if (request.equals("block")) serverResponse = block(body);
             else if (request.equals("unblock")) serverResponse = unblock(body);
             else if (request.equals("online")) serverResponse = online(body);
+            else if (request.equals("getAddress")) serverResponse = getAddress(body);
             else if (request.equals("capitalize")) serverResponse = capitalize(body);
             else serverResponse = responseOK();
         	
@@ -255,14 +256,16 @@ public class RequestWorkerRunnable implements Runnable{
 		} catch (UnknownHostException e) {
 			e.printStackTrace();
 		} catch (ConnectException e) {
-			e.printStackTrace();
+//			e.printStackTrace();
+			System.out.println("ERROR: Cannot forward message to user because user is unreachable.");
+			response = new JSONObject();
 		} catch (IOException e) {
 			e.printStackTrace();
 		} catch (NullPointerException e) {
 			e.printStackTrace();
 		} finally {
 			try {
-				clientSocket.close();
+				if (clientSocket != null) clientSocket.close();
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
@@ -302,14 +305,16 @@ public class RequestWorkerRunnable implements Runnable{
 		} catch (UnknownHostException e) {
 			e.printStackTrace();
 		} catch (ConnectException e) {
-			e.printStackTrace();
+//			e.printStackTrace();
+			System.out.println("ERROR: Cannot notify user because user is unreachable.");
+			response = new JSONObject();
 		} catch (IOException e) {
 			e.printStackTrace();
 		} catch (NullPointerException e) {
 			e.printStackTrace();
 		} finally {
 			try {
-				clientSocket.close();
+				if (clientSocket != null) clientSocket.close();
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
@@ -362,7 +367,7 @@ public class RequestWorkerRunnable implements Runnable{
     	return response;
 	}
     
-    /* Send message to a client */
+    /* List all online users */
     private JSONObject online(JSONObject body) {
     	JSONObject response = new JSONObject();
 
@@ -378,6 +383,35 @@ public class RequestWorkerRunnable implements Runnable{
     	
     	return response;
     }
+    
+    /* Get address and port of specified user */
+    private JSONObject getAddress(JSONObject body) {
+    	JSONObject response = new JSONObject();
+
+    	String username = body.getString("username");
+    	String usernameToGetAddress = body.getString("usernameToGetAddress");
+    	User userToGetAddress = (User) ServerLauncher.INSTANCE.getAllClients().get(usernameToGetAddress);
+    	if (userToGetAddress == null) {
+    		// User requested does not exist
+    		response.put("result", "failure");
+        	response.put("errMsg", "No such user. Please try again.");
+    	} else if (userToGetAddress.blocked(username)) {
+    		// User requested blocked requesting user
+    		response.put("result", "failure");
+        	response.put("response", "You cannot get address of this user because the user has blocked you.");
+    	} /* TODO else if (userToGetAddress.getAddress().equals("")) { 
+    		// TODO Requested user hasn't logged in once yet so no valid address
+    	}*/ else {
+    		// Send address and port of requested user
+    		response.put("result", "success");
+    		JSONObject info = new JSONObject();
+    		info.put("address", userToGetAddress.getAddress());
+    		info.put("port", userToGetAddress.getPort());
+        	response.put("response", info);
+    	}
+    	
+    	return response;
+	}
     
     /* TEST Echo capitalized version of client input */
     private JSONObject capitalize(JSONObject body) {
