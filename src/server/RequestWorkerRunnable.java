@@ -103,14 +103,25 @@ public class RequestWorkerRunnable implements Runnable{
     	} else {
     		// Credential validated
     		String address = connectionSocket.getRemoteSocketAddress().toString();
+    		
+    		// Notify previously logged in session of this credential before disconnecting it
     		if (user.isOnline()) {
     			notify(user.getAddress(), user.getPort(), "You have been logged out because your account is logged in somewhere else.");
     		}
+    		
+    		// Store address and port of current session
     		address = address.substring(1);
     		address = address.split(":")[0];
     		user.login(address, port);
     		response.put("result", "success");
         	response.put("response", "Welcome to simple chat server!");
+        	
+        	// Notify other users about the presence of this user
+        	HashMap<String, User> onlineClients = ServerLauncher.INSTANCE.getOnlineClients();
+        	for (User u: onlineClients.values()) {
+        		if (u.getUsername().equals(username)) continue;
+        		notify(u.getAddress(), u.getPort(), "User \"" + username + "\" is now online.");
+        	}
     	}
     	
     	return response;
@@ -157,6 +168,14 @@ public class RequestWorkerRunnable implements Runnable{
     	user.logout();
     	response.put("result", "success");
     	response.put("response", "You have successfully logged out.");
+    	
+    	// Notify other users about the leave of this user
+    	HashMap<String, User> onlineClients = ServerLauncher.INSTANCE.getOnlineClients();
+    	for (User u: onlineClients.values()) {
+    		if (u.getUsername().equals(username)) continue;
+    		notify(u.getAddress(), u.getPort(), "User \"" + username + "\" is now offline.");
+    	}
+    	
     	return response;
     }
     
