@@ -42,6 +42,7 @@ public class RequestWorkerRunnable implements Runnable{
             JSONObject serverResponse;
             if (request.equals("login")) serverResponse = login(body);
             else if (request.equals("logout")) serverResponse = logout(body);
+            else if (request.equals("message")) serverResponse = message(body);
             else if (request.equals("capitalize")) serverResponse = capitalize(body);
             else serverResponse = responseOK();
         	
@@ -106,6 +107,7 @@ public class RequestWorkerRunnable implements Runnable{
     	return response;
     }
     
+    /* Log out */
     private JSONObject logout(JSONObject body) {
     	JSONObject response = new JSONObject();
 
@@ -123,7 +125,82 @@ public class RequestWorkerRunnable implements Runnable{
     	return response;
     }
     
-    /* TODO Notify previous address about duplicated login */
+    /* TODO Send message to a client */
+    private JSONObject message(JSONObject body) {
+    	JSONObject response = new JSONObject();
+
+    	String usernameSender = body.getString("sender");
+    	String usernameReceiver = body.getString("receiver");
+    	String msg = body.getString("msg");
+    	User receiver = (User) ServerLauncher.INSTANCE.getAllClients().get(usernameReceiver);
+    	if (receiver == null) {
+    		// Receiver does not exist
+    		response.put("result", "failure");
+        	response.put("errMsg", "No such user. Please try again.");
+    	} else if (receiver.blocked(usernameSender)) {
+    		// Sender is blocked
+    		response.put("result", "failure");
+        	response.put("errMsg", "Your message could not be delivered as the recipient has blocked you.");
+    	} else {
+    		// Send message to receiver
+    		if (receiver.isOnline()) {
+    			forwardMessage(receiver.getAddress(), receiver.getPort(), usernameSender, msg);
+    		}
+    		else receiver.addOfflineMsg(usernameSender, msg);
+    		
+    		response.put("result", "success");
+        	response.put("response", "Message sent.");
+    	}
+    	
+    	return response;
+    }
+    
+    /* Forward message to client */
+    private JSONObject forwardMessage(String address, int port, String username, String msg) {
+    	JSONObject response = null;
+    	
+    	Socket clientSocket = null;
+    	try {
+			// Open connection
+			clientSocket = new Socket(address, port);
+			// Build request JSONObject
+			JSONObject request = new JSONObject();
+			request.put("request", "message");
+			JSONObject reqBody = new JSONObject();
+			reqBody.put("sender", username);
+			reqBody.put("content", msg);
+			request.put("body", reqBody);
+			
+			// Talk to client
+			DataOutputStream outToClient = new DataOutputStream(clientSocket.getOutputStream());
+			outToClient.writeBytes(request.toString() + '\n');
+			
+			BufferedReader inFromClient = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
+			response = new JSONObject(inFromClient.readLine());
+//			printClientResponse(response);
+			
+			// Close connection
+			clientSocket.close();	
+		} catch (UnknownHostException e) {
+			e.printStackTrace();
+		} catch (ConnectException e) {
+			e.printStackTrace();
+		} catch (IOException e) {
+			e.printStackTrace();
+		} catch (NullPointerException e) {
+			e.printStackTrace();
+		} finally {
+			try {
+				clientSocket.close();
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		}
+    	
+    	return response;
+	}
+
+	/* Send notification to client */
     private JSONObject notify(String address, int port, String msg) {
     	JSONObject response = null;
     	

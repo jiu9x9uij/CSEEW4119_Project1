@@ -70,7 +70,7 @@ public class RequestWorkerRunnable implements Runnable{
     	ClientLauncher.println(sender + ": " + content);
     	
     	response.put("result", "success");
-    	response.put("response", "");
+    	response.put("response", "Message received.");
     	
     	return response;
     }
@@ -85,7 +85,7 @@ public class RequestWorkerRunnable implements Runnable{
     	if (content.contains("logged out")) ClientLauncher.terminateClient();
     	
     	response.put("result", "success");
-    	response.put("response", "");
+    	response.put("response", "Notification received.");
     	
     	return response;
     }

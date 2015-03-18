@@ -1,11 +1,8 @@
 package client;
 
 import java.io.BufferedReader;
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.util.Scanner;
 
 import org.json.JSONObject;
 
@@ -62,8 +59,16 @@ public class ClientLauncher {
 	}
 	
 	private static void sendMessage(String command) {
-		// TODO Auto-generated method stub
+		String[] args = command.split(" ");
+		if (args.length < 3) {
+			println("ERROR: Invalid command format. Please use \"message <username> <message content>\"");
+			return;
+		}
 		
+		String usernameReceiver = args[1];
+		String msg = new String();
+		for (int i = 2; i < args.length; i++) msg += args[i];
+		JSONObject response = connector.sendMessage(clientUsername, usernameReceiver, msg);
 	}
 	
 	private static void broadcast(String command) {

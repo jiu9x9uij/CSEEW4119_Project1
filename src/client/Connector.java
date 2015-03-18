@@ -87,7 +87,7 @@ public enum Connector {
 	
 	/** Log out
 	 * @return response JSONObject with key <tt>result</tt> ("success" / "failure"),
-	 *  <tt>response</tt> that contains the capitalized msg (only exists if code is "success"),
+	 *  <tt>response</tt> that contains the success notification (only exists if code is "success"),
 	 *   and <tt>errMsg</tt> (only exists if code is "failure")
 	 */
 	public JSONObject logout(String username) {
@@ -102,6 +102,55 @@ public enum Connector {
 			request.put("request", "logout");
 			JSONObject body = new JSONObject();
 			body.put("username", username);
+			request.put("body", body);
+			
+			// Talk to server
+			DataOutputStream outToServer = new DataOutputStream(clientSocket.getOutputStream());
+			outToServer.writeBytes(request.toString() + '\n');
+			
+			// Get response back from server
+			BufferedReader inFromServer = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
+			response = new JSONObject(inFromServer.readLine());
+			printServerResponse(response);
+			
+			// Close connection
+			clientSocket.close();
+		} catch (UnknownHostException e) {
+			e.printStackTrace();
+		} catch (IOException e) {
+			e.printStackTrace();
+		} catch (NullPointerException e) {
+			e.printStackTrace();
+		} finally {
+			try {
+				clientSocket.close();
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		}
+		
+		return response;
+	}
+	
+	/** Send message through server
+	 * @return response JSONObject with key <tt>result</tt> ("success" / "failure"),
+	 *  <tt>response</tt> that contains the success msg (only exists if code is "success"),
+	 *   and <tt>errMsg</tt> (only exists if code is "failure")
+	 */
+	public JSONObject sendMessage(String usernameSender, String usernameReceiver, String msg) {
+		JSONObject response = null;
+		
+		try {
+			// Open connection
+			clientSocket = new Socket(host, port);
+			
+			// Build request JSONObject
+			JSONObject request = new JSONObject();
+			request.put("request", "message");
+			JSONObject body = new JSONObject();
+			body.put("sender", usernameSender);
+			body.put("receiver", usernameReceiver);
+			body.put("msg", msg);
 			request.put("body", body);
 			
 			// Talk to server

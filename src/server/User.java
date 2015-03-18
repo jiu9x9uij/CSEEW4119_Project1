@@ -1,8 +1,9 @@
 package server;
 
-import java.util.ArrayList;
-import java.util.Queue;
 import static java.util.concurrent.TimeUnit.NANOSECONDS;
+
+import java.util.HashSet;
+import java.util.concurrent.ConcurrentLinkedQueue;
 
 public class User {
 	String username, password;
@@ -10,8 +11,8 @@ public class User {
 	long timestampOfBlocking = -1;
 	String address = null;
 	int port = -1;
-	Queue<String> offlineMsgs;
-	ArrayList<String> blackList;
+	ConcurrentLinkedQueue<Message> offlineMsgs = new ConcurrentLinkedQueue<Message>();
+	HashSet<String> blackList = new HashSet<String>();
 	
 	public User(String username, String password) {
 		this.username = username;
@@ -70,12 +71,17 @@ public class User {
 		ServerLauncher.INSTANCE.removeOnlineClient(this);
 	}
 	
-	public void addMsg(String msg) {
-		offlineMsgs.add(msg);
+	public void addOfflineMsg(String sender, String msg) {
+		offlineMsgs.add(new Message(sender, msg));
 	}
 	
 	public void blockUser(String username) {
 		blackList.add(username);
+	}
+	
+	public boolean blocked(String username) {
+		if (blackList.contains(username)) return true;
+		else return false;
 	}
 
 	public String getUsername() {
