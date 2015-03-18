@@ -10,6 +10,7 @@ import java.net.UnknownHostException;
 import java.util.HashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -48,6 +49,8 @@ public class RequestWorkerRunnable implements Runnable{
             else if (request.equals("message")) serverResponse = message(body);
             else if (request.equals("broadcast")) serverResponse = broadcast(body);
             else if (request.equals("block")) serverResponse = block(body);
+            else if (request.equals("unblock")) serverResponse = unblock(body);
+            else if (request.equals("online")) serverResponse = online(body);
             else if (request.equals("capitalize")) serverResponse = capitalize(body);
             else serverResponse = responseOK();
         	
@@ -212,8 +215,8 @@ public class RequestWorkerRunnable implements Runnable{
     	
     	// Response to sender
     	if (blockedBySome) {
-    		response.put("result", "failure");
-        	response.put("errMsg", "Your message could not be delivered to some recipients.");
+    		response.put("result", "success");
+        	response.put("response", "Your message could not be delivered to some recipients.");
 		}
     	else {
     		response.put("result", "success");
@@ -315,11 +318,66 @@ public class RequestWorkerRunnable implements Runnable{
     	return response;
 	}
     
-    /* TODO Block a user */
+    /* Block a user */
     private JSONObject block(JSONObject body) {
-		// TODO Auto-generated method stub
-		return null;
+    	JSONObject response = new JSONObject();
+
+    	String username = body.getString("username");
+    	String usernameToBlock = body.getString("usernameToBlock");
+    	User user = (User) ServerLauncher.INSTANCE.getAllClients().get(username);
+    	if (!ServerLauncher.INSTANCE.getAllClients().containsKey(usernameToBlock)) {
+    		// User to be blocked does not exist
+    		response.put("result", "failure");
+        	response.put("errMsg", "No such user. Please try again.");
+    	} else {
+    		// Block specified user for requesting user
+    		user.blockUser(usernameToBlock);
+    		
+    		response.put("result", "success");
+        	response.put("response", "User " + usernameToBlock + " has been blocked.");
+    	}
+    	
+    	return response;
 	}
+    
+    /* Unblock a user */
+    private JSONObject unblock(JSONObject body) {
+    	JSONObject response = new JSONObject();
+
+    	String username = body.getString("username");
+    	String usernameToUnblock = body.getString("usernameToUnblock");
+    	User user = (User) ServerLauncher.INSTANCE.getAllClients().get(username);
+    	if (!ServerLauncher.INSTANCE.getAllClients().containsKey(usernameToUnblock)) {
+    		// User to be unblocked does not exist
+    		response.put("result", "failure");
+        	response.put("errMsg", "No such user. Please try again.");
+    	} else {
+    		// Unblock specified user for requesting user
+    		user.unblockUser(usernameToUnblock);
+    		
+    		response.put("result", "success");
+        	response.put("response", "User " + usernameToUnblock + " is unblocked.");
+    	}
+    	
+    	return response;
+	}
+    
+    /* Send message to a client */
+    private JSONObject online(JSONObject body) {
+    	JSONObject response = new JSONObject();
+
+    	JSONArray onlineList = new JSONArray();
+    	HashMap<String, User> allClients = ServerLauncher.INSTANCE.getAllClients();
+    	for (User u: allClients.values()) {
+    		// If this user is online, add to response
+    		if (u.isOnline()) onlineList.put(u.getUsername());
+    	}
+
+    	response.put("result", "success");
+    	response.put("response", onlineList);
+    	
+    	return response;
+    }
     
     /* TEST Echo capitalized version of client input */
     private JSONObject capitalize(JSONObject body) {

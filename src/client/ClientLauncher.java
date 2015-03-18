@@ -4,6 +4,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 
+import org.json.JSONArray;
 import org.json.JSONObject;
 
 public class ClientLauncher {
@@ -52,8 +53,8 @@ public class ClientLauncher {
 	}
 	
 	private static void getOfflineMsgs() {
-		println("--------- Offline Messages ---------");
 		JSONObject response = connector.getOfflineMsgs(clientUsername);
+		println("--------- Offline Messages ---------");
 		if (response.getString("result").equals("failure")) println(response.getString("errMsg"));
 		println("------------------------------------");
 	}
@@ -101,18 +102,36 @@ public class ClientLauncher {
 	}
 	
 	private static void listOnlineUsers() {
-		// TODO Auto-generated method stub
-		
+		JSONObject response = connector.listOnlineUsers();
+		println("----------- Online Users -----------");
+//		printServerResponse(response);
+		JSONArray list = (JSONArray) response.get("response");
+		for (int i = 0; i < list.length(); i++) {
+			println(list.getString(i));
+		}
+		println("------------------------------------");
 	}
 	
 	private static void blockUser(String command) {
-		// TODO Auto-generated method stub
+		String[] args = command.split(" ");
+		if (args.length != 2) {
+			println("ERROR: Invalid command format. Please use \"block <username>\"");
+			return;
+		}
 		
+		JSONObject response = connector.block(clientUsername, args[1]);
+		printServerResponse(response);
 	}
 	
 	private static void unblockUser(String command) {
-		// TODO Auto-generated method stub
+		String[] args = command.split(" ");
+		if (args.length != 2) {
+			println("ERROR: Invalid command format. Please use \"unblock <username>\"");
+			return;
+		}
 		
+		JSONObject response = connector.unblock(clientUsername, args[1]);
+		printServerResponse(response);
 	}
 	
 	private static void getAddressOfUser(String command) {
@@ -146,7 +165,7 @@ public class ClientLauncher {
 	
 	private static void printServerResponse(JSONObject response) {
 //		System.out.println("---Server Response---");
-		if (response.getString("result").equals("success")) System.out.println(response.getString("response"));
+		if (response.getString("result").equals("success")) System.out.println(response.get("response"));
 		else System.out.println("ERROR: " + response.getString("errMsg"));
 //		System.out.println("---------End---------");
 	}

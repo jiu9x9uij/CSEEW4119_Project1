@@ -83,6 +83,10 @@ public class User {
 		blackList.add(username);
 	}
 	
+	public void unblockUser(String username) {
+		blackList.remove(username);
+	}
+	
 	public boolean blocked(String username) {
 		if (blackList.contains(username)) return true;
 		else return false;

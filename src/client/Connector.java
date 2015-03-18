@@ -45,8 +45,7 @@ public enum Connector {
 			JSONObject body = new JSONObject();
 			body.put("username", username);
 			body.put("password", password);
-			// TODO use real address, port
-			body.put("address", "");
+//			body.put("address", "");
 			body.put("port", clientPort);
 			request.put("body", body);
 			
@@ -223,7 +222,7 @@ public enum Connector {
 	 *   and <tt>errMsg</tt> (only exists if code is "failure")
 	 */
 	public JSONObject broadcast(String clientUsername, String msg) {
-JSONObject response = null;
+		JSONObject response = null;
 		
 		try {
 			// Open connection
@@ -235,6 +234,145 @@ JSONObject response = null;
 			JSONObject body = new JSONObject();
 			body.put("sender", clientUsername);
 			body.put("msg", msg);
+			request.put("body", body);
+			
+			// Talk to server
+			DataOutputStream outToServer = new DataOutputStream(clientSocket.getOutputStream());
+			outToServer.writeBytes(request.toString() + '\n');
+			
+			// Get response back from server
+			BufferedReader inFromServer = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
+			response = new JSONObject(inFromServer.readLine());
+			
+			// Close connection
+			clientSocket.close();
+		} catch (UnknownHostException e) {
+			e.printStackTrace();
+		} catch (IOException e) {
+			e.printStackTrace();
+		} catch (NullPointerException e) {
+			e.printStackTrace();
+		} finally {
+			try {
+				clientSocket.close();
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		}
+		
+		return response;
+	}
+	
+	/** Block a specified user
+	 * @return response JSONObject with key <tt>result</tt> ("success" / "failure"),
+	 *  <tt>response</tt> that contains the success msg (only exists if code is "success"),
+	 *   and <tt>errMsg</tt> (only exists if code is "failure")
+	 */
+	public JSONObject block(String clientUsername, String usernameToBlock) {
+		JSONObject response = null;
+		
+		try {
+			// Open connection
+			clientSocket = new Socket(host, port);
+			
+			// Build request JSONObject
+			JSONObject request = new JSONObject();
+			request.put("request", "block");
+			JSONObject body = new JSONObject();
+			body.put("username", clientUsername);
+			body.put("usernameToBlock", usernameToBlock);
+			request.put("body", body);
+			
+			// Talk to server
+			DataOutputStream outToServer = new DataOutputStream(clientSocket.getOutputStream());
+			outToServer.writeBytes(request.toString() + '\n');
+			
+			// Get response back from server
+			BufferedReader inFromServer = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
+			response = new JSONObject(inFromServer.readLine());
+			
+			// Close connection
+			clientSocket.close();
+		} catch (UnknownHostException e) {
+			e.printStackTrace();
+		} catch (IOException e) {
+			e.printStackTrace();
+		} catch (NullPointerException e) {
+			e.printStackTrace();
+		} finally {
+			try {
+				clientSocket.close();
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		}
+		
+		return response;
+	}
+	
+	/** Unblock a specified user
+	 * @return response JSONObject with key <tt>result</tt> ("success" / "failure"),
+	 *  <tt>response</tt> that contains the success msg (only exists if code is "success"),
+	 *   and <tt>errMsg</tt> (only exists if code is "failure")
+	 */
+	public JSONObject unblock(String clientUsername, String usernameToUnblock) {
+		JSONObject response = null;
+		
+		try {
+			// Open connection
+			clientSocket = new Socket(host, port);
+			
+			// Build request JSONObject
+			JSONObject request = new JSONObject();
+			request.put("request", "unblock");
+			JSONObject body = new JSONObject();
+			body.put("username", clientUsername);
+			body.put("usernameToUnblock", usernameToUnblock);
+			request.put("body", body);
+			
+			// Talk to server
+			DataOutputStream outToServer = new DataOutputStream(clientSocket.getOutputStream());
+			outToServer.writeBytes(request.toString() + '\n');
+			
+			// Get response back from server
+			BufferedReader inFromServer = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
+			response = new JSONObject(inFromServer.readLine());
+			
+			// Close connection
+			clientSocket.close();
+		} catch (UnknownHostException e) {
+			e.printStackTrace();
+		} catch (IOException e) {
+			e.printStackTrace();
+		} catch (NullPointerException e) {
+			e.printStackTrace();
+		} finally {
+			try {
+				clientSocket.close();
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		}
+		
+		return response;
+	}
+	
+	/** Unblock a specified user
+	 * @return response JSONObject with key <tt>result</tt> ("success" / "failure"),
+	 *  <tt>response</tt> that contains the success msg (only exists if code is "success"),
+	 *   and <tt>errMsg</tt> (only exists if code is "failure")
+	 */
+	public JSONObject listOnlineUsers() {
+		JSONObject response = null;
+		
+		try {
+			// Open connection
+			clientSocket = new Socket(host, port);
+			
+			// Build request JSONObject
+			JSONObject request = new JSONObject();
+			request.put("request", "online");
+			JSONObject body = new JSONObject();
 			request.put("body", body);
 			
 			// Talk to server
