@@ -10,6 +10,9 @@ import java.net.UnknownHostException;
 import java.util.HashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
+import model.Message;
+import model.User;
+
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -52,6 +55,7 @@ public class RequestWorkerRunnable implements Runnable{
             else if (request.equals("unblock")) serverResponse = unblock(body);
             else if (request.equals("online")) serverResponse = online(body);
             else if (request.equals("getAddress")) serverResponse = getAddress(body);
+            else if (request.equals("heartbeat")) serverResponse = heartbeat(body);
             else if (request.equals("capitalize")) serverResponse = capitalize(body);
             else serverResponse = responseOK();
         	
@@ -428,6 +432,21 @@ public class RequestWorkerRunnable implements Runnable{
     		info.put("port", userToGetAddress.getPort());
         	response.put("response", info);
     	}
+    	
+    	return response;
+	}
+    
+    /* Update heartbeat of a user */
+    private JSONObject heartbeat(JSONObject body) {
+    	JSONObject response = new JSONObject();
+
+    	String username = body.getString("username");
+    	long timestamp = body.getLong("timestamp");
+    	User user = (User) ServerLauncher.INSTANCE.getAllClients().get(username);
+    	
+    	user.updateHeartbeat(timestamp);
+    	response.put("result", "success");
+    	response.put("response", "Heartbeat received.");
     	
     	return response;
 	}

@@ -1,23 +1,31 @@
 package client;
 
+import static java.util.concurrent.TimeUnit.NANOSECONDS;
+
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.ConnectException;
 import java.util.HashMap;
 
+import model.Contact;
+
 import org.json.JSONArray;
 import org.json.JSONObject;
 
+import server.ServerSettings;
+
 public class ClientLauncher {
-	private static ThreadPooledListener serverListener;
+	private static ThreadPooledListener serverListener = null;
 	private static Connector connector;
 	private static String clientUsername = null;
+	private static Thread heartbeat = null;
 	private static HashMap<String, Contact> privateContacts = new HashMap<String, Contact>();
 	private static BufferedReader input;
 	
 	public static void terminateClient() {
-		serverListener.stop();
+		if (serverListener != null) serverListener.stop();
+		if (heartbeat != null) heartbeat.stop();
 		System.exit(0);
 	}
 	
@@ -44,6 +52,20 @@ public class ClientLauncher {
 			printServerResponse(response);
 			if (response.getString("result").equals("success")) {
 				clientUsername = username;
+//				connector.sendHeartbeat(clientUsername, NANOSECONDS.toSeconds(System.nanoTime()));
+				heartbeat = new Thread() {
+					public void run() {
+						while(true) {
+							try {
+								connector.sendHeartbeat(clientUsername, System.nanoTime());
+								Thread.sleep(ServerSettings.TIME_OUT*1000);
+							} catch (InterruptedException e) {
+								e.printStackTrace();
+							}
+					    }
+					}
+				};
+				heartbeat.start();
 				return 1;
 			}
 			else if (!response.getString("errMsg").contains("blocked")) return 0;
@@ -85,7 +107,7 @@ public class ClientLauncher {
 			else msg += (" " + args[i]);
 		}
 		JSONObject response = connector.sendMessage(clientUsername, usernameReceiver, msg);
-		printServerResponse(response);
+		if (response.getString("result").equals("failure")) printServerResponse(response);
 	}
 	
 	private static void broadcast(String command) {
@@ -101,7 +123,7 @@ public class ClientLauncher {
 			else msg += (" " + args[i]);
 		}
 		JSONObject response = connector.broadcast(clientUsername, msg);
-		printServerResponse(response);
+		if (response.getString("result").equals("failure")) printServerResponse(response);
 	}
 	
 	private static void listOnlineUsers() {

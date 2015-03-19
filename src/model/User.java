@@ -1,14 +1,19 @@
-package server;
+package model;
 
 import static java.util.concurrent.TimeUnit.NANOSECONDS;
 
 import java.util.HashSet;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
+import server.RequestWorkerRunnable;
+import server.ServerLauncher;
+import server.ServerSettings;
+
 public class User {
 	private String username, password;
 	private int numOfLoginAttemps = 0;
 	private long timestampOfBlocking = -1;
+	private long timestampOfLastHeartbeat = Integer.MIN_VALUE;
 	private String address = "";
 	private int port = -1;
 	private ConcurrentLinkedQueue<Message> offlineMsgs = new ConcurrentLinkedQueue<Message>();
@@ -57,10 +62,25 @@ public class User {
 		this.port = port;
 		ServerLauncher.INSTANCE.addOnlineClient(this); // Because clients are kept in HashMap, old login info will be replaced
 		ServerLauncher.INSTANCE.removeOfflineClient(this);
+		timestampOfLastHeartbeat = System.nanoTime();
 	}
 	
 	public boolean isOnline() {
+		if (isTimedOut()) {
+			logout();
+			return false;
+		}
+		
 		if (ServerLauncher.INSTANCE.getOnlineClients().containsKey(username)) return true;
+		else return false;
+	}
+	
+	public void updateHeartbeat(long timestampOfLastHeartbeat) {
+		this.timestampOfLastHeartbeat = timestampOfLastHeartbeat;
+	}
+	
+	public boolean isTimedOut() {
+		if (NANOSECONDS.toSeconds(System.nanoTime() - timestampOfLastHeartbeat) > ServerSettings.TIME_OUT) return true;
 		else return false;
 	}
 
